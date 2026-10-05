@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>DEADLINE RUN: Game Mahasiswi ISTTS</title>
+    <meta name="description" content="Bantai Rasa Malas, Taklukkan Tugas, dan Rebut Gelarmu! Game 2D endless runner bertema kehidupan mahasiswa ISTTS." />
+    
+    <!-- PWA Configuration -->
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#1a1a2e" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Deadline Run" />
+    <link rel="icon" type="image/jpeg" href="app-icon_2.jpeg" />
+
+    <style>
+      /* Desain Banner Install Custom */
+      .install-banner {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        display: flex;
+        align-items: center;
+        padding: 10px 15px;
+        gap: 12px;
+        z-index: 9999;
+        width: 90%;
+        max-width: 400px;
+        display: none; /* Sembunyi dari awal */
+      }
+
+      .install-banner.show {
+        display: flex;
+      }
+
+      .install-banner img {
+        width: 45px;
+        height: 45px;
+        border-radius: 10px;
+        object-fit: cover;
+      }
+
+      .banner-text {
+        flex-grow: 1;
+        font-family: sans-serif;
+        font-size: 14px;
+        color: #333;
+        font-weight: bold;
+        line-height: 1.2;
+      }
+
+      .btn-download {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-weight: bold;
+        cursor: pointer;
+      }
+
+      .btn-close {
+        background: none;
+        border: none;
+        font-size: 18px;
+        color: #999;
+        cursor: pointer;
+        padding: 0 5px;
+      }
+    </style>
+
+    <meta property="og:title" content="DEADLINE RUN: Game Mahasiswi ISTTS" />
+    <meta property="og:description" content="Bantai Rasa Malas, Taklukkan Tugas, dan Rebut Gelarmu! Game 2D endless runner bertema kehidupan mahasiswa ISTTS." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="app-icon_2.jpeg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="app-icon_2.jpeg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
+  </head>
+  <body class="bg-slate-900 text-slate-100 select-none overflow-hidden touch-manipulation">
+    <div id="root"></div>
+
+    <!-- Wujud Banner Install -->
+    <div id="installBanner" class="install-banner">
+      <img src="app-icon_2.jpeg" alt="Logo Deadline Run">
+      <div class="banner-text">Install DEADLINE RUN ke HP kamu!</div>
+      <button id="btnDownload" class="btn-download">Download</button>
+      <button id="btnClose" class="btn-close">✖</button>
+    </div>
+
+    <script type="module" src="/src/main.tsx"></script>
+
+    <!-- Script untuk Service Worker & Logika Banner -->
+    <script>
+      // 1. Daftarkan Service Worker
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('service-worker.js');
+      }
+
+      // 2. Logika Banner Install
+      let deferredPrompt = null;
+      window.__pwaPrompt = null;
+      const banner = document.getElementById('installBanner');
+      const btnClose = document.getElementById('btnClose');
+      const btnDownload = document.getElementById('btnDownload');
+
+      // Tangkap event install dari HP
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        window.__pwaPrompt = e;
+        window.dispatchEvent(new CustomEvent('pwa-prompt-ready'));
+        // Munculkan banner custom kita
+        if (banner) banner.classList.add('show');
+      });
+
+      // Logika tombol Silang (X)
+      if (btnClose && banner) {
+        btnClose.addEventListener('click', () => {
+          banner.classList.remove('show');
+        });
+      }
+
+      // Logika tombol Download
+      if (btnDownload && banner) {
+        btnDownload.addEventListener('click', async () => {
+          banner.classList.remove('show'); // Hilangkan banner saat di-klik
+          const promptToUse = deferredPrompt || window.__pwaPrompt;
+          if (promptToUse) {
+            promptToUse.prompt(); // Munculkan popup install bawaan HP
+            const { outcome } = await promptToUse.userChoice;
+            if (outcome === 'accepted') {
+              console.log('Game berhasil di-install');
+            }
+            deferredPrompt = null;
+            window.__pwaPrompt = null;
+          }
+        });
+      }
+
+      // Sembunyikan jika sudah pernah di-install
+      window.addEventListener('appinstalled', () => {
+        if (banner) banner.classList.remove('show');
+        window.__pwaPrompt = null;
+        window.dispatchEvent(new CustomEvent('pwa-installed-success'));
+      });
+    </script>
+  </body>
+</html>
+
